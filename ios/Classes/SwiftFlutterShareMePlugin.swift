@@ -268,7 +268,7 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
             try PHPhotoLibrary.shared().performChangesAndWait {
                 let request = PHAssetChangeRequest.creationRequestForAsset(from: image!)
                 let assetId = request.placeholderForCreatedAsset?.localIdentifier
-                let instShareUrl:String? = "instagram://library?LocalIdentifier=" + assetId!
+                let instShareUrl:String = "instagram://library?LocalIdentifier=" + assetId!
                 
                 //Share image
                 if UIApplication.shared.canOpenURL(instagramURL as URL) {
