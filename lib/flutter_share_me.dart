@@ -90,8 +90,17 @@ class FlutterShareMe {
   Future<String> shareToFacebook({
     @required String msg,
     List<String> imagesPath = const [],
+    FileType fileType = FileType.image,
   }) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
+    if (fileType == FileType.image) {
+      arguments.putIfAbsent('fileType', () => 'image');
+    } else if (fileType == FileType.video) {
+      arguments.putIfAbsent('fileType', () => 'video');
+    } else {
+      arguments.putIfAbsent('fileType', () => 'pdf');
+    }
+
     arguments.putIfAbsent('msg', () => msg);
     arguments.putIfAbsent('urls', () => imagesPath);
     String result;
@@ -134,8 +143,17 @@ class FlutterShareMe {
   Future<String> shareToInstagram({
     @required String msg,
     List<String> imagesPath = const [],
+    FileType fileType = FileType.image,
   }) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
+    if (fileType == FileType.image) {
+      arguments.putIfAbsent('fileType', () => 'image');
+    } else if (fileType == FileType.video) {
+      arguments.putIfAbsent('fileType', () => 'video');
+    } else {
+      arguments.putIfAbsent('fileType', () => 'pdf');
+    }
+
     arguments.putIfAbsent('msg', () => msg);
     arguments.putIfAbsent('urls', () => imagesPath);
     String result;

@@ -100,7 +100,8 @@ class _MyAppState extends State<MyApp> {
     final FlutterShareMe flutterShareMe = FlutterShareMe();
     switch (share) {
       case Share.facebook:
-        response = await flutterShareMe.shareToFacebook(url: url, msg: msg);
+        response =
+            await flutterShareMe.shareToFacebook(imagesPath: [url], msg: msg);
         break;
       case Share.twitter:
         response = await flutterShareMe.shareToTwitter(url: url, msg: msg);
@@ -108,7 +109,7 @@ class _MyAppState extends State<MyApp> {
       case Share.whatsapp:
         if (file != null) {
           response = await flutterShareMe.shareToWhatsApp(
-              imagePath: file.path,
+              imagesPath: [file.path],
               fileType: videoEnable ? FileType.video : FileType.image);
         } else {
           response = await flutterShareMe.shareToWhatsApp(msg: msg);
@@ -125,7 +126,8 @@ class _MyAppState extends State<MyApp> {
             message: msg, phoneNumber: 'phone-number-with-country-code');
         break;
       case Share.share_instagram:
-        response = await flutterShareMe.shareToInstagram(imagePath: file.path);
+        response = await flutterShareMe
+            .shareToInstagram(imagesPath: [file.path], msg: '');
         break;
     }
     debugPrint(response);

@@ -18,6 +18,7 @@ import com.facebook.FacebookException;
 import com.facebook.share.Sharer;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.model.SharePhoto;
+import com.facebook.share.model.ShareVideo;
 import com.facebook.share.model.ShareContent;
 import com.facebook.share.model.ShareMediaContent;
 import com.facebook.share.model.ShareMedia;
@@ -95,13 +96,14 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      */
     @Override
     public void onMethodCall(MethodCall call, @NonNull Result result) {
-        String url, msg;
+        String url, msg, fileType;
         List<String> urls;
         switch (call.method) {
             case _methodFaceBook:
                 urls = call.argument("urls");
                 msg = call.argument("msg");
-                shareToFacebook(urls, msg, result);
+                fileType = call.argument("fileType");
+                shareToFacebook(urls, msg, fileType, result);
                 break;
             case _methodTwitter:
                 url = call.argument("url");
@@ -130,7 +132,8 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
             case _methodInstagramShare:
                 urls = call.argument("urls");
                 msg = call.argument("msg");
-                shareInstagramStory(urls, msg, result);
+                fileType = call.argument("fileType");
+                shareInstagramStory(urls, fileType, msg, result);
                 break;
             default:
                 result.notImplemented();
@@ -186,7 +189,7 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      * @param msg    String
      * @param result Result
      */
-    private void shareToFacebook(List<String> imagesPath, String msg, Result result) {
+    private void shareToFacebook(List<String> imagesPath, String msg, String fileType, Result result) {
 
         ShareDialog shareDialog = new ShareDialog(activity);
         // this part is optional
@@ -211,21 +214,23 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
         {
             File file = new File(imagePath);
             Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
-            SharePhoto sharePhoto = new SharePhoto.Builder()
-                .setImageUrl(fileUri)
-                .build();
-            medias.add(sharePhoto);
+            if(fileType.equals("image")){
+                SharePhoto sharePhoto = new SharePhoto.Builder()
+                    .setImageUrl(fileUri)
+                    .build();
+                medias.add(sharePhoto);
+            }else if(fileType.equals("video")){
+                ShareVideo sharePhoto = new ShareVideo.Builder()
+                    .setLocalUrl(fileUri)
+                    .build();
+                medias.add(sharePhoto);
+            }
         } 
 
         ShareMediaContent shareContent = new ShareMediaContent.Builder()
             .addMedia(medias)
             .build();
-            /*
-        ShareLinkContent content = new ShareLinkContent.Builder()
-                .setContentUrl(Uri.parse(url))
-                .setQuote(msg)
-                .build();
-                */
+        
         if (ShareDialog.canShow(ShareMediaContent.class)) {
             shareDialog.show(shareContent);
             result.success("success");
@@ -297,7 +302,7 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      * @param url    local image path
      * @param result flutterResult
      */
-    private void shareInstagramStory(List<String> imagesPath, String msg, Result result) {
+    private void shareInstagramStory(List<String> imagesPath,String fileType, String msg, Result result) {
         if (instagramInstalled()) {
             ArrayList<Uri> files = new ArrayList<Uri>();
             for (String imagePath : imagesPath) 
@@ -307,7 +312,11 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                 files.add(fileUri); 
             } 
             Intent instagramIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
-            instagramIntent.setType("image/*");
+            if(fileType.equals("image")){
+                instagramIntent.setType("image/*");
+            }else{
+                instagramIntent.setType("video/*");
+            }
             instagramIntent.putExtra(Intent.EXTRA_TITLE, msg);
             instagramIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
             instagramIntent.setPackage("com.instagram.android");
