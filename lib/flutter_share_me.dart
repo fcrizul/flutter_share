@@ -24,11 +24,11 @@ class FlutterShareMe {
   /// If include image then text params will be ingored as there is no current way in IOS share both at the same.
   Future<String> shareToWhatsApp(
       {String msg = '',
-      String imagePath = '',
+      List<String> imagesPath = const [],
       FileType fileType = FileType.image}) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
     arguments.putIfAbsent('msg', () => msg);
-    arguments.putIfAbsent('url', () => imagePath);
+    arguments.putIfAbsent('urls', () => imagesPath);
     if (fileType == FileType.image) {
       arguments.putIfAbsent('fileType', () => 'image');
     } else {
@@ -87,11 +87,13 @@ class FlutterShareMe {
   }
 
   ///share to facebook
-  Future<String> shareToFacebook(
-      {@required String msg, String url = ''}) async {
+  Future<String> shareToFacebook({
+    @required String msg,
+    List<String> imagesPath = const [],
+  }) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
     arguments.putIfAbsent('msg', () => msg);
-    arguments.putIfAbsent('url', () => url);
+    arguments.putIfAbsent('urls', () => imagesPath);
     String result;
     try {
       result = await _channel.invokeMethod<String>(_methodFaceBook, arguments);
@@ -129,9 +131,13 @@ class FlutterShareMe {
   }
 
   ///share file to instagram
-  Future<String> shareToInstagram({@required String imagePath}) async {
+  Future<String> shareToInstagram({
+    @required String msg,
+    List<String> imagesPath = const [],
+  }) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
-    arguments.putIfAbsent('url', () => imagePath);
+    arguments.putIfAbsent('msg', () => msg);
+    arguments.putIfAbsent('urls', () => imagesPath);
     String result;
 
     try {
