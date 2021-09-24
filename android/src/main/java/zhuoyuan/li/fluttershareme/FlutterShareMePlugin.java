@@ -17,6 +17,12 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.share.Sharer;
 import com.facebook.share.model.ShareLinkContent;
+import com.facebook.share.model.ShareStoryContent;
+import com.facebook.share.model.SharePhoto;
+import com.facebook.share.model.ShareVideo;
+import com.facebook.share.model.ShareContent;
+import com.facebook.share.model.ShareMediaContent;
+import com.facebook.share.model.ShareMedia;
 import com.facebook.share.widget.ShareDialog;
 import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
@@ -25,6 +31,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.List;
+import java.util.ArrayList;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -89,12 +97,15 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      */
     @Override
     public void onMethodCall(MethodCall call, @NonNull Result result) {
-        String url, msg;
+        String url, msg, fileType, postType;
+        List<String> urls;
         switch (call.method) {
             case _methodFaceBook:
-                url = call.argument("url");
+                urls = call.argument("urls");
                 msg = call.argument("msg");
-                shareToFacebook(url, msg, result);
+                fileType = call.argument("fileType");
+                postType = call.argument("postType");
+                shareToFacebook(urls, msg, fileType, postType, result);
                 break;
             case _methodTwitter:
                 url = call.argument("url");
@@ -103,13 +114,13 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                 break;
             case _methodWhatsApp:
                 msg = call.argument("msg");
-                url = call.argument("url");
-                shareWhatsApp(url, msg, result, false);
+                urls = call.argument("urls");
+                shareWhatsApp(urls, msg, result, false);
                 break;
             case _methodWhatsAppBusiness:
                 msg = call.argument("msg");
                 url = call.argument("url");
-                shareWhatsApp(url, msg, result, true);
+                //shareWhatsApp(url, msg, result, true);
                 break;
             case _methodWhatsAppPersonal:
                 msg = call.argument("msg");
@@ -121,8 +132,11 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                 shareSystem(result, msg);
                 break;
             case _methodInstagramShare:
-                msg = call.argument("url");
-                shareInstagramStory(msg, result);
+                urls = call.argument("urls");
+                msg = call.argument("msg");
+                fileType = call.argument("fileType");
+                postType = call.argument("postType");
+                shareInstagram(urls, fileType, postType, msg, result);
                 break;
             default:
                 result.notImplemented();
@@ -178,7 +192,7 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      * @param msg    String
      * @param result Result
      */
-    private void shareToFacebook(String url, String msg, Result result) {
+    private void shareToFacebook(List<String> imagesPath, String msg, String fileType, String postType, Result result) {
 
         ShareDialog shareDialog = new ShareDialog(activity);
         // this part is optional
@@ -198,16 +212,40 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                 System.out.println("---------------onError");
             }
         });
-
-        ShareLinkContent content = new ShareLinkContent.Builder()
-                .setContentUrl(Uri.parse(url))
-                .setQuote(msg)
+        List<ShareMedia> medias = new ArrayList<ShareMedia>();
+        for (String imagePath : imagesPath) 
+        {
+            File file = new File(imagePath);
+            Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+            if(fileType.equals("image")){
+                SharePhoto sharePhoto = new SharePhoto.Builder()
+                    .setImageUrl(fileUri)
+                    .build();
+                medias.add(sharePhoto);
+            }else if(fileType.equals("video")){
+                ShareVideo sharePhoto = new ShareVideo.Builder()
+                    .setLocalUrl(fileUri)
+                    .build();
+                medias.add(sharePhoto);
+            }
+        } 
+        if(postType.equals("feed")){
+            ShareMediaContent shareContent = new ShareMediaContent.Builder()
+                .addMedia(medias)
                 .build();
-        if (ShareDialog.canShow(ShareLinkContent.class)) {
-            shareDialog.show(content);
-            result.success("success");
+            if (ShareDialog.canShow(ShareMediaContent.class)) {
+                shareDialog.show(shareContent);
+                result.success("success");
+            }
+        }else{
+            ShareStoryContent shareContent = new ShareStoryContent.Builder()
+                    .setBackgroundAsset(medias.get(0))
+                    .build();
+            if (ShareDialog.canShow(ShareMediaContent.class)) {
+                shareDialog.show(shareContent);
+                result.success("success");
+            }
         }
-
     }
 
     /**
@@ -217,20 +255,24 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      * @param result             Result
      * @param shareToWhatsAppBiz boolean
      */
-    private void shareWhatsApp(String imagePath, String msg, Result result, boolean shareToWhatsAppBiz) {
+    private void shareWhatsApp(List<String> imagesPath, String msg, Result result, boolean shareToWhatsAppBiz) {
         try {
-            Intent whatsappIntent = new Intent(Intent.ACTION_SEND);
+            Intent whatsappIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            ArrayList<Uri> files = new ArrayList<Uri>();
             
             whatsappIntent.setPackage(shareToWhatsAppBiz ? "com.whatsapp.w4b" : "com.whatsapp");
             whatsappIntent.putExtra(Intent.EXTRA_TEXT, msg);
             // if the url is the not empty then get url of the file and share
-            if (!TextUtils.isEmpty(imagePath)) {
+            if (imagesPath.size() > 0 ) {
                 whatsappIntent.setType("*/*");
-                System.out.print(imagePath+"url is not empty");
-                File file = new File(imagePath);
-                Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                for (String imagePath : imagesPath) 
+                {
+                    File file = new File(imagePath);
+                    Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                    files.add(fileUri); 
+                } 
                 whatsappIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                whatsappIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+                whatsappIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
                 whatsappIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
             else {
@@ -270,14 +312,30 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      * @param url    local image path
      * @param result flutterResult
      */
-    private void shareInstagramStory(String url, Result result) {
+    private void shareInstagram(List<String> imagesPath,String fileType, String postType, String msg, Result result) {
         if (instagramInstalled()) {
-            File file = new File(url);
-            Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
-
-            Intent instagramIntent = new Intent(Intent.ACTION_SEND);
-            instagramIntent.setType("image/*");
-            instagramIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            ArrayList<Uri> files = new ArrayList<Uri>();
+            for (String imagePath : imagesPath) 
+            {
+                File file = new File(imagePath);
+                Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                files.add(fileUri); 
+            } 
+            Intent instagramIntent;
+            if(postType.equals("story")){
+                instagramIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                instagramIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
+            }else{
+                instagramIntent = new Intent("com.instagram.share.ADD_TO_STORY");
+                instagramIntent.putExtra(Intent.EXTRA_STREAM, files.get(0));
+            }
+             if(fileType.equals("image")){
+                instagramIntent.setType("image/*");
+            }else{
+                instagramIntent.setType("video/*");
+            }
+            //instagramIntent.putExtra(Intent.EXTRA_TITLE, msg);            
+            instagramIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             instagramIntent.setPackage("com.instagram.android");
             try {
                 activity.startActivity(instagramIntent);

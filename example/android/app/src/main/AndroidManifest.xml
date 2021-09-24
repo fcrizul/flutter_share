@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="zhuoyuan.li.flutter_share_me_example">
 
-    <!-- The INTERNET permission is required for development. Specifically,
+    <!-- The INTERNET permission is @required for development. Specifically,
          flutter needs it to communicate with the running application
          to allow setting breakpoints, to provide hot reload, etc.
     -->

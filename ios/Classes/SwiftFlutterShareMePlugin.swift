@@ -28,12 +28,12 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
         if(call.method.elementsEqual(_methodWhatsApp)){
             let args = call.arguments as? Dictionary<String,Any>
             
-            if args!["url"] as! String == "" {
+            if args!["urls"] as! Array<String> == [] {
                 // if don't pass url then pass blank so if can strat normal whatsapp
-                shareWhatsApp(message: args!["msg"] as! String,imageUrl: "",type: args!["fileType"] as! String,result: result)
+                shareWhatsApp(message: args!["msg"] as! String,filesUrl: [],type: args!["fileType"] as! String,result: result)
             }else{
                 // if user pass url then use that
-                shareWhatsApp(message: args!["msg"] as! String,imageUrl: args!["url"] as! String,type: args!["fileType"] as! String,result: result)
+                shareWhatsApp(message: args!["msg"] as! String,filesUrl: args!["urls"] as! Array<String>,type: args!["fileType"] as! String,result: result)
             }
             
         }
@@ -77,11 +77,11 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
     }
     
     
-    func shareWhatsApp(message:String, imageUrl:String,type:String,result: @escaping FlutterResult)  {
+    func shareWhatsApp(message:String, filesUrl:Array<String>,type:String,result: @escaping FlutterResult)  {
         // @ For ios
         // we can't set both if you pass image then text will ignore
         var whatsURL = ""
-        if(imageUrl==""){
+		if(filesUrl.isEmpty){
             whatsURL = "whatsapp://send?text=\(message)"
         }else{
             whatsURL = "whatsapp://app"
@@ -92,37 +92,41 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
         let whatsAppURL  = NSURL(string: whatsURL.addingPercentEncoding(withAllowedCharacters: characterSet)!)
         if UIApplication.shared.canOpenURL(whatsAppURL! as URL)
         {
-            if(imageUrl==""){
+            if(filesUrl.isEmpty){
                 //mean user did not pass image url  so just got with text message
                 result("Sucess");
                 UIApplication.shared.openURL(whatsAppURL! as URL)
-                
-            }
-            else{
+            }else{
                 //this is whats app work around so will open system share and exclude other share types
                 let viewController = UIApplication.shared.delegate?.window??.rootViewController
-                let urlData:Data
-                let filePath:URL
-                if(type=="image"){
-                    let image = UIImage(named: imageUrl)
-                    if(image==nil){
-                        result("File format not supported Please check the file.")
-                        return;
-                    }
-                    urlData=(image?.jpegData(compressionQuality: 1.0))!
-                    filePath=URL(fileURLWithPath:NSHomeDirectory()).appendingPathComponent("Documents/whatsAppTmp.wai")
-                }else{
-                    filePath=URL(fileURLWithPath:NSTemporaryDirectory()).appendingPathComponent("video.m4v")
-                    urlData = NSData(contentsOf: URL(fileURLWithPath: imageUrl))! as Data
-                }
-                
-                let tempFile = filePath
+				var urlData:Data
+                var filesPath = [URL]()
+                var iter = 0
+				
                 do{
-                    try urlData.write(to: tempFile, options: .atomic)
+                    for fileUrl in filesUrl {
+                        let filePath:URL
+                        if(type=="image"){
+                            let image = UIImage(named: fileUrl)
+                            if(image==nil){
+                                result("File format not supported Please check the file.")
+                                return;
+                            }
+                            urlData=(image?.jpegData(compressionQuality: 1.0))!
+                            filePath=URL(fileURLWithPath:NSHomeDirectory()).appendingPathComponent("Documents/whatsAppTmp\(iter).wai")
+                        }else{
+                            filePath=URL(fileURLWithPath:NSTemporaryDirectory()).appendingPathComponent("video\(iter).m4v")
+                            urlData = NSData(contentsOf: URL(fileURLWithPath: fileUrl))! as Data
+                        }
+                        let tempFile = filePath
+                        try urlData.write(to: tempFile, options: .atomic)
+                        iter += 1;
+                        filesPath.append(tempFile)
+                    }
                     // image to be share
-                    let imageToShare = [tempFile]
+                    //let imageToShare = [tempFile]
                     
-                    let activityVC = UIActivityViewController(activityItems: imageToShare, applicationActivities: nil)
+                    let activityVC = UIActivityViewController(activityItems: filesPath, applicationActivities: nil)
                     // we want to exlude most of the things so developer can see whatsapp only on system share sheet
                     activityVC.excludedActivityTypes = [UIActivity.ActivityType.airDrop,UIActivity.ActivityType.message, UIActivity.ActivityType.mail,UIActivity.ActivityType.postToTwitter,UIActivity.ActivityType.postToWeibo,UIActivity.ActivityType.print,UIActivity.ActivityType.openInIBooks,UIActivity.ActivityType.postToFlickr,UIActivity.ActivityType.postToFacebook,UIActivity.ActivityType.addToReadingList,UIActivity.ActivityType.copyToPasteboard,UIActivity.ActivityType.postToFacebook]
                     

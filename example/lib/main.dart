@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  File? file;
+  File file;
   ImagePicker picker = ImagePicker();
   bool videoEnable = false;
 
@@ -76,18 +76,16 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> pickImage() async {
-    final XFile? xFile = await picker.pickImage(source: ImageSource.gallery);
-    print(xFile);
-    file = File(xFile!.path);
+    final PickedFile xFile = await picker.getImage(source: ImageSource.gallery);
+    file = File(xFile.path);
     setState(() {
       videoEnable = false;
     });
   }
 
   Future<void> pickVideo() async {
-    final XFile? xFile = await picker.pickVideo(source: ImageSource.camera);
-    print(xFile);
-    file = File(xFile!.path);
+    final PickedFile xFile = await picker.getImage(source: ImageSource.camera);
+    file = File(xFile.path);
     setState(() {
       videoEnable = true;
     });
@@ -98,11 +96,12 @@ class _MyAppState extends State<MyApp> {
         'Flutter share is great!!\n Check out full example at https://pub.dev/packages/flutter_share_me';
     String url = 'https://pub.dev/packages/flutter_share_me';
 
-    String? response;
+    String response;
     final FlutterShareMe flutterShareMe = FlutterShareMe();
     switch (share) {
       case Share.facebook:
-        response = await flutterShareMe.shareToFacebook(url: url, msg: msg);
+        response =
+            await flutterShareMe.shareToFacebook(imagesPath: [url], msg: msg);
         break;
       case Share.twitter:
         response = await flutterShareMe.shareToTwitter(url: url, msg: msg);
@@ -110,7 +109,8 @@ class _MyAppState extends State<MyApp> {
       case Share.whatsapp:
         if (file != null) {
           response = await flutterShareMe.shareToWhatsApp(
-              imagePath: file!.path, fileType: videoEnable ? FileType.video : FileType.image);
+              imagesPath: [file.path],
+              fileType: videoEnable ? FileType.video : FileType.image);
         } else {
           response = await flutterShareMe.shareToWhatsApp(msg: msg);
         }
@@ -126,7 +126,8 @@ class _MyAppState extends State<MyApp> {
             message: msg, phoneNumber: 'phone-number-with-country-code');
         break;
       case Share.share_instagram:
-        response = await flutterShareMe.shareToInstagram(imagePath: file!.path);
+        response = await flutterShareMe
+            .shareToInstagram(imagesPath: [file.path], msg: '');
         break;
     }
     debugPrint(response);
