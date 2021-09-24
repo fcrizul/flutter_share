@@ -4,3 +4,8 @@ enum FileType {
   video,
   pdf,
 }
+
+enum PostType {
+  feed,
+  story,
+}

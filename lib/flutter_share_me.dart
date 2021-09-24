@@ -91,6 +91,7 @@ class FlutterShareMe {
     @required String msg,
     List<String> imagesPath = const [],
     FileType fileType = FileType.image,
+    PostType postType = PostType.feed,
   }) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
     if (fileType == FileType.image) {
@@ -100,7 +101,8 @@ class FlutterShareMe {
     } else {
       arguments.putIfAbsent('fileType', () => 'pdf');
     }
-
+    arguments.putIfAbsent(
+        'postType', () => postType == PostType.feed ? 'feed' : 'story');
     arguments.putIfAbsent('msg', () => msg);
     arguments.putIfAbsent('urls', () => imagesPath);
     String result;
@@ -144,6 +146,7 @@ class FlutterShareMe {
     @required String msg,
     List<String> imagesPath = const [],
     FileType fileType = FileType.image,
+    PostType postType = PostType.feed,
   }) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
     if (fileType == FileType.image) {
@@ -153,6 +156,8 @@ class FlutterShareMe {
     } else {
       arguments.putIfAbsent('fileType', () => 'pdf');
     }
+    arguments.putIfAbsent(
+        'postType', () => postType == PostType.feed ? 'feed' : 'story');
 
     arguments.putIfAbsent('msg', () => msg);
     arguments.putIfAbsent('urls', () => imagesPath);
