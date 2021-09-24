@@ -99,34 +99,34 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
             }else{
                 //this is whats app work around so will open system share and exclude other share types
                 let viewController = UIApplication.shared.delegate?.window??.rootViewController
-                /*
-				let urlData:Data
-                let filePath:URL
-				for string in stringArray {
-					if(type=="image"){
-						let image = UIImage(named: imageUrl)
-						if(image==nil){
-							result("File format not supported Please check the file.")
-							return;
-						}
-						urlData=(image?.jpegData(compressionQuality: 1.0))!
-						filePath=URL(fileURLWithPath:NSHomeDirectory()).appendingPathComponent("Documents/whatsAppTmp.wai")
-					}else{
-						filePath=URL(fileURLWithPath:NSTemporaryDirectory()).appendingPathComponent("video.m4v")
-						urlData = NSData(contentsOf: URL(fileURLWithPath: imageUrl))! as Data
-					}
-					let tempFile = filePath
-					try urlData.write(to: tempFile, options: .atomic)
-				}
-                */
-                
-                
+				var urlData:Data
+                var filesPath = [URL]()
+                var iter = 0
+				
                 do{
-                    
+                    for fileUrl in filesUrl {
+                        let filePath:URL
+                        if(type=="image"){
+                            let image = UIImage(named: fileUrl)
+                            if(image==nil){
+                                result("File format not supported Please check the file.")
+                                return;
+                            }
+                            urlData=(image?.jpegData(compressionQuality: 1.0))!
+                            filePath=URL(fileURLWithPath:NSHomeDirectory()).appendingPathComponent("Documents/whatsAppTmp\(iter).wai")
+                        }else{
+                            filePath=URL(fileURLWithPath:NSTemporaryDirectory()).appendingPathComponent("video\(iter).m4v")
+                            urlData = NSData(contentsOf: URL(fileURLWithPath: fileUrl))! as Data
+                        }
+                        let tempFile = filePath
+                        try urlData.write(to: tempFile, options: .atomic)
+                        iter += 1;
+                        filesPath.append(tempFile)
+                    }
                     // image to be share
                     //let imageToShare = [tempFile]
                     
-                    let activityVC = UIActivityViewController(activityItems: filesUrl, applicationActivities: nil)
+                    let activityVC = UIActivityViewController(activityItems: filesPath, applicationActivities: nil)
                     // we want to exlude most of the things so developer can see whatsapp only on system share sheet
                     activityVC.excludedActivityTypes = [UIActivity.ActivityType.airDrop,UIActivity.ActivityType.message, UIActivity.ActivityType.mail,UIActivity.ActivityType.postToTwitter,UIActivity.ActivityType.postToWeibo,UIActivity.ActivityType.print,UIActivity.ActivityType.openInIBooks,UIActivity.ActivityType.postToFlickr,UIActivity.ActivityType.postToFacebook,UIActivity.ActivityType.addToReadingList,UIActivity.ActivityType.copyToPasteboard,UIActivity.ActivityType.postToFacebook]
                     
