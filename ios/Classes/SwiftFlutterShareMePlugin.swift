@@ -114,8 +114,11 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
                             }
                             urlData=(image?.jpegData(compressionQuality: 1.0))!
                             filePath=URL(fileURLWithPath:NSHomeDirectory()).appendingPathComponent("Documents/whatsAppTmp\(iter).wai")
-                        }else{
+                        }else if(type=="video"){ 
                             filePath=URL(fileURLWithPath:NSTemporaryDirectory()).appendingPathComponent("video\(iter).m4v")
+                            urlData = NSData(contentsOf: URL(fileURLWithPath: fileUrl))! as Data
+                        }else{
+                            filePath=URL(fileURLWithPath:NSTemporaryDirectory()).appendingPathComponent("document\(iter).pdf")
                             urlData = NSData(contentsOf: URL(fileURLWithPath: fileUrl))! as Data
                         }
                         let tempFile = filePath

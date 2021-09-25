@@ -31,8 +31,10 @@ class FlutterShareMe {
     arguments.putIfAbsent('urls', () => imagesPath);
     if (fileType == FileType.image) {
       arguments.putIfAbsent('fileType', () => 'image');
-    } else {
+    } else if (fileType == FileType.video) {
       arguments.putIfAbsent('fileType', () => 'video');
+    } else {
+      arguments.putIfAbsent('fileType', () => 'pdf');
     }
 
     String result;
