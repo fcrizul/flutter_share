@@ -119,8 +119,8 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                 break;
             case _methodWhatsAppBusiness:
                 msg = call.argument("msg");
-                url = call.argument("url");
-                //shareWhatsApp(url, msg, result, true);
+                urls = call.argument("urls");
+                shareWhatsApp(urls, msg, result, true);
                 break;
             case _methodWhatsAppPersonal:
                 msg = call.argument("msg");
@@ -271,11 +271,9 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                     Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
                     files.add(fileUri); 
                 } 
-                whatsappIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 whatsappIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, files);
                 whatsappIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            }
-            else {
+            } else {
                 whatsappIntent.setType("text/plain");
             }
             activity.startActivity(whatsappIntent);

@@ -72,11 +72,20 @@ class FlutterShareMe {
   /// For ios
   /// If include image then text params will be ingored as there is no current way in IOS share both at the same.
   Future<String> shareToWhatsApp4Biz(
-      {String msg = '', String imagePath = ''}) async {
+      {String msg = '',
+      List<String> imagesPath = const [],
+      FileType fileType = FileType.image}) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
-
     arguments.putIfAbsent('msg', () => msg);
-    arguments.putIfAbsent('url', () => imagePath);
+    arguments.putIfAbsent('urls', () => imagesPath);
+    if (fileType == FileType.image) {
+      arguments.putIfAbsent('fileType', () => 'image');
+    } else if (fileType == FileType.video) {
+      arguments.putIfAbsent('fileType', () => 'video');
+    } else {
+      arguments.putIfAbsent('fileType', () => 'pdf');
+    }
+
     String result;
     try {
       result = await _channel.invokeMethod<String>(
