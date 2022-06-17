@@ -1,8 +1,8 @@
 import Flutter
 import UIKit
-import FBSDKShareKit
+// import FBSDKShareKit
 import PhotosUI
-public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate {
+public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin /*, SharingDelegate*/ {
     
     
     let _methodWhatsApp = "whatsapp_share";
@@ -188,6 +188,7 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
     // @ map conting meesage and url
     
     func sharefacebook(message:Dictionary<String,Any>, result: @escaping FlutterResult)  {
+        /*
         let viewController = UIApplication.shared.delegate?.window??.rootViewController
         let shareDialog=ShareDialog()
         let shareContent = ShareLinkContent()
@@ -195,6 +196,7 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
         shareContent.quote = message["msg"] as? String
         shareDialog.mode = .automatic
         ShareDialog(fromViewController: viewController, content: shareContent, delegate: self).show()
+        */
         result("Sucess")
         
     }
@@ -299,7 +301,7 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
             print("Fail")
         }
     }
-    
+    /*
     //Facebook delegate methods
     public func sharer(_ sharer: Sharing, didCompleteWithResults results: [String : Any]) {
         print("Share: Success")
@@ -314,4 +316,5 @@ public class SwiftFlutterShareMePlugin: NSObject, FlutterPlugin, SharingDelegate
     public func sharerDidCancel(_ sharer: Sharing) {
         print("Share: Cancel")
     }
+    */
 }
