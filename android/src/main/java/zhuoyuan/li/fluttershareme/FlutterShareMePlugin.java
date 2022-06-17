@@ -2,8 +2,10 @@ package zhuoyuan.li.fluttershareme;
 
 
 import android.app.Activity;
+
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -16,6 +18,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.share.Sharer;
+import com.facebook.FacebookSdk;
 import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.model.ShareStoryContent;
 import com.facebook.share.model.SharePhoto;
@@ -24,7 +27,6 @@ import com.facebook.share.model.ShareContent;
 import com.facebook.share.model.ShareMediaContent;
 import com.facebook.share.model.ShareMedia;
 import com.facebook.share.widget.ShareDialog;
-import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -59,8 +61,10 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
 
 
     private Activity activity;
+    private Context context;
     private static CallbackManager callbackManager;
     private MethodChannel methodChannel;
+
 
     /**
      * Plugin registration.
@@ -71,8 +75,10 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
         instance.activity = registrar.activity();
     }
 
+
     @Override
     public void onAttachedToEngine(FlutterPluginBinding binding) {
+        context = binding.getApplicationContext();
         onAttachedToEngine(binding.getBinaryMessenger());
     }
 
@@ -80,7 +86,6 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
         methodChannel.setMethodCallHandler(null);
         methodChannel = null;
-        activity = null;
     }
 
     private void onAttachedToEngine(BinaryMessenger messenger) {
@@ -110,7 +115,6 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
             case _methodTwitter:
                 url = call.argument("url");
                 msg = call.argument("msg");
-                shareToTwitter(url, msg, result);
                 break;
             case _methodWhatsApp:
                 msg = call.argument("msg");
@@ -162,28 +166,7 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
         }
     }
 
-    /**
-     * share to twitter
-     *
-     * @param url    String
-     * @param msg    String
-     * @param result Result
-     */
-
-    private void shareToTwitter(String url, String msg, Result result) {
-        try {
-            TweetComposer.Builder builder = new TweetComposer.Builder(activity)
-                    .text(msg);
-            if (url != null && url.length() > 0) {
-                builder.url(new URL(url));
-            }
-
-            builder.show();
-            result.success("success");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-    }
+ 
 
     /**
      * share to Facebook
@@ -193,58 +176,65 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
      * @param result Result
      */
     private void shareToFacebook(List<String> imagesPath, String msg, String fileType, String postType, Result result) {
+        try{
+            ShareDialog shareDialog = new ShareDialog(activity);
+            // this part is optional
+            shareDialog.registerCallback(callbackManager, new FacebookCallback<Sharer.Result>() {
+                @Override
+                public void onSuccess(Sharer.Result result) {
+                    System.out.println("--------------------success");
+                }
 
-        ShareDialog shareDialog = new ShareDialog(activity);
-        // this part is optional
-        shareDialog.registerCallback(callbackManager, new FacebookCallback<Sharer.Result>() {
-            @Override
-            public void onSuccess(Sharer.Result result) {
-                System.out.println("--------------------success");
-            }
+                @Override
+                public void onCancel() {
+                    System.out.println("-----------------onCancel");
+                }
 
-            @Override
-            public void onCancel() {
-                System.out.println("-----------------onCancel");
-            }
-
-            @Override
-            public void onError(FacebookException error) {
-                System.out.println("---------------onError");
-            }
-        });
-        List<ShareMedia> medias = new ArrayList<ShareMedia>();
-        for (String imagePath : imagesPath) 
-        {
-            File file = new File(imagePath);
-            Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
-            if(fileType.equals("image")){
-                SharePhoto sharePhoto = new SharePhoto.Builder()
-                    .setImageUrl(fileUri)
+                @Override
+                public void onError(FacebookException error) {
+                    System.out.println("---------------onError");
+                }
+            });
+            List medias = new ArrayList();
+            for (String imagePath : imagesPath) 
+            {
+                File file = new File(imagePath);
+                Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                if(fileType.equals("image")){
+                    SharePhoto sharePhoto = new SharePhoto.Builder()
+                        .setImageUrl(fileUri)
+                        .build();
+                    medias.add(sharePhoto);
+                }else if(fileType.equals("video")){
+                    ShareVideo sharePhoto = new ShareVideo.Builder()
+                        .setLocalUrl(fileUri)
+                        .build();
+                    medias.add(sharePhoto);
+                }
+            } 
+            if(postType.equals("feed")){
+                ShareMediaContent shareContent = new ShareMediaContent.Builder()
+                    .addMedia(medias)
                     .build();
-                medias.add(sharePhoto);
-            }else if(fileType.equals("video")){
-                ShareVideo sharePhoto = new ShareVideo.Builder()
-                    .setLocalUrl(fileUri)
-                    .build();
-                medias.add(sharePhoto);
+                if (ShareDialog.canShow(ShareMediaContent.class)) {
+                    shareDialog.show(shareContent);
+                    result.success("success");
+                }else{
+                    result.error("error", "No se puede abrir la aplicación", "");
+                }
+            }else{
+                ShareStoryContent shareContent = new ShareStoryContent.Builder()
+                        .setBackgroundAsset((ShareMedia) medias.get(0) )
+                        .build();
+                if (ShareDialog.canShow(ShareMediaContent.class)) {
+                    shareDialog.show(shareContent);
+                    result.success("success");
+                }else{
+                    result.error("error", "No se puede abrir la aplicación", "");
+                }
             }
-        } 
-        if(postType.equals("feed")){
-            ShareMediaContent shareContent = new ShareMediaContent.Builder()
-                .addMedia(medias)
-                .build();
-            if (ShareDialog.canShow(ShareMediaContent.class)) {
-                shareDialog.show(shareContent);
-                result.success("success");
-            }
-        }else{
-            ShareStoryContent shareContent = new ShareStoryContent.Builder()
-                    .setBackgroundAsset(medias.get(0))
-                    .build();
-            if (ShareDialog.canShow(ShareMediaContent.class)) {
-                shareDialog.show(shareContent);
-                result.success("success");
-            }
+        } catch (Exception var9) {
+            result.error("error", var9.toString(), "");
         }
     }
 
@@ -278,8 +268,9 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
             }
             activity.startActivity(whatsappIntent);
             result.success("success");
-        } catch (Exception var9) {
-            result.error("error", var9.toString(), "");
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.error("error", e.toString(), "");
         }
     }
 
@@ -354,7 +345,7 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
 
     @Override
     public void onDetachedFromActivityForConfigChanges() {
-
+        activity = null;
     }
 
     @Override

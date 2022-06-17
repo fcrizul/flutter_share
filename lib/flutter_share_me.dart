@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'file_type.dart';
@@ -22,7 +21,7 @@ class FlutterShareMe {
   /// [phoneNumber] enter phone number with counry code
   /// For ios
   /// If include image then text params will be ingored as there is no current way in IOS share both at the same.
-  Future<String> shareToWhatsApp(
+  Future<String?> shareToWhatsApp(
       {String msg = '',
       List<String> imagesPath = const [],
       FileType fileType = FileType.image}) async {
@@ -37,7 +36,7 @@ class FlutterShareMe {
       arguments.putIfAbsent('fileType', () => 'pdf');
     }
 
-    String result;
+    String? result;
     try {
       result = await _channel.invokeMethod<String>(_methodWhatsApp, arguments);
     } catch (e) {
@@ -50,13 +49,13 @@ class FlutterShareMe {
   ///share to WhatsApp
   /// [phoneNumber] phone number with counry code
   /// [msg] message text you want on whatsapp
-  Future<String> shareWhatsAppPersonalMessage(
-      {@required String message, @required String phoneNumber}) async {
+  Future<String?> shareWhatsAppPersonalMessage(
+      {required String message, required String phoneNumber}) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
     arguments.putIfAbsent('msg', () => message);
     arguments.putIfAbsent('phoneNumber', () => phoneNumber);
 
-    String result;
+    String? result;
     try {
       result = await _channel.invokeMethod<String>(
           _methodWhatsAppPersonal, arguments);
@@ -71,7 +70,7 @@ class FlutterShareMe {
   ///[imagePath] is local image
   /// For ios
   /// If include image then text params will be ingored as there is no current way in IOS share both at the same.
-  Future<String> shareToWhatsApp4Biz(
+  Future<String?> shareToWhatsApp4Biz(
       {String msg = '',
       List<String> imagesPath = const [],
       FileType fileType = FileType.image}) async {
@@ -86,7 +85,7 @@ class FlutterShareMe {
       arguments.putIfAbsent('fileType', () => 'pdf');
     }
 
-    String result;
+    String? result;
     try {
       result = await _channel.invokeMethod<String>(
           _methodWhatsAppBusiness, arguments);
@@ -98,8 +97,8 @@ class FlutterShareMe {
   }
 
   ///share to facebook
-  Future<String> shareToFacebook({
-    @required String msg,
+  Future<String?> shareToFacebook({
+    required String msg,
     List<String> imagesPath = const [],
     FileType fileType = FileType.image,
     PostType postType = PostType.feed,
@@ -116,7 +115,7 @@ class FlutterShareMe {
         'postType', () => postType == PostType.feed ? 'feed' : 'story');
     arguments.putIfAbsent('msg', () => msg);
     arguments.putIfAbsent('urls', () => imagesPath);
-    String result;
+    String? result;
     try {
       result = await _channel.invokeMethod<String>(_methodFaceBook, arguments);
     } catch (e) {
@@ -127,11 +126,11 @@ class FlutterShareMe {
 
   ///share to twitter
   ///[msg] string that you want share.
-  Future<String> shareToTwitter({@required String msg, String url = ''}) async {
+  Future<String?> shareToTwitter({required String msg, String url = ''}) async {
     final Map<String, dynamic> arguments = <String, dynamic>{};
     arguments.putIfAbsent('msg', () => msg);
     arguments.putIfAbsent('url', () => url);
-    String result;
+    String? result;
     try {
       result = await _channel.invokeMethod(_methodTwitter, arguments);
     } catch (e) {
@@ -141,8 +140,8 @@ class FlutterShareMe {
   }
 
   ///use system share ui
-  Future<String> shareToSystem({@required String msg}) async {
-    String result;
+  Future<String?> shareToSystem({required String msg}) async {
+    String? result;
     try {
       result =
           await _channel.invokeMethod<String>(_methodSystemShare, {'msg': msg});
@@ -153,8 +152,8 @@ class FlutterShareMe {
   }
 
   ///share file to instagram
-  Future<String> shareToInstagram({
-    @required String msg,
+  Future<String?> shareToInstagram({
+    required String msg,
     List<String> imagesPath = const [],
     FileType fileType = FileType.image,
     PostType postType = PostType.feed,
@@ -172,7 +171,7 @@ class FlutterShareMe {
 
     arguments.putIfAbsent('msg', () => msg);
     arguments.putIfAbsent('urls', () => imagesPath);
-    String result;
+    String? result;
 
     try {
       result =
