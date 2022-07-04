@@ -195,24 +195,25 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                     System.out.println("---------------onError");
                 }
             });
-            List medias = new ArrayList();
-            for (String imagePath : imagesPath) 
-            {
-                File file = new File(imagePath);
-                Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
-                if(fileType.equals("image")){
-                    SharePhoto sharePhoto = new SharePhoto.Builder()
-                        .setImageUrl(fileUri)
-                        .build();
-                    medias.add(sharePhoto);
-                }else if(fileType.equals("video")){
-                    ShareVideo sharePhoto = new ShareVideo.Builder()
-                        .setLocalUrl(fileUri)
-                        .build();
-                    medias.add(sharePhoto);
-                }
-            } 
+        
             if(postType.equals("feed")){
+                List medias = new ArrayList();
+                for (String imagePath : imagesPath) 
+                {
+                    File file = new File(imagePath);
+                    Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                    if(fileType.equals("image")){
+                        SharePhoto sharePhoto = new SharePhoto.Builder()
+                            .setImageUrl(fileUri)
+                            .build();
+                        medias.add(sharePhoto);
+                    }else if(fileType.equals("video")){
+                        ShareVideo sharePhoto = new ShareVideo.Builder()
+                            .setLocalUrl(fileUri)
+                            .build();
+                        medias.add(sharePhoto);
+                    }
+                } 
                 ShareMediaContent shareContent = new ShareMediaContent.Builder()
                     .addMedia(medias)
                     .build();
@@ -223,8 +224,26 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                     result.error("error", "No se puede abrir la aplicación", "");
                 }
             }else{
+                File file = new File(imagesPath.get(0));
+                Uri backgroundAssetUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                final int idRes = context.getResources().getIdentifier("facebook_app_id", "string", context.getPackageName());
+                String appId = context.getString(idRes);
+
+                // Instantiate implicit intent with ADD_TO_STORY action
+                Intent intent = new Intent("com.facebook.stories.ADD_TO_STORY");
+                intent.setDataAndType(backgroundAssetUri, "image/jpeg");
+                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.putExtra("com.facebook.platform.extra.APPLICATION_ID", appId);
+
+                if (activity.getPackageManager().resolveActivity(intent, 0) != null) {
+                    activity.startActivityForResult(intent, 0);
+                    result.success("success");
+                }else{
+                    result.error("error", "No se puede abrir la aplicación", "");
+                }
+                /*
                 ShareStoryContent shareContent = new ShareStoryContent.Builder()
-                        .setBackgroundAsset((ShareMedia) medias.get(0) )
+                        .setBackgroundAsset(first )
                         .build();
                 if (ShareDialog.canShow(ShareMediaContent.class)) {
                     shareDialog.show(shareContent);
@@ -232,6 +251,7 @@ public class FlutterShareMePlugin implements MethodCallHandler, FlutterPlugin, A
                 }else{
                     result.error("error", "No se puede abrir la aplicación", "");
                 }
+                */
             }
         } catch (Exception var9) {
             result.error("error", var9.toString(), "");
